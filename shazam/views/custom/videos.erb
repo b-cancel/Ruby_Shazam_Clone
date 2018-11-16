@@ -1,0 +1,26 @@
+<div class="container">
+=begin
+Non-Pro and Non-Admin users should only see free videos on /videos
+Admin users should see all videos on /videos
+Pro users should see all videos on /videos
+=end
+    <% @Videos.each do |video| %>
+        <% 
+        user = current_user()
+        if(video.pro == false || (user.pro || user.administrator))
+        %>
+            <div class="row col-lg-12 p-3">
+                <div class="card col-lg-12">
+                    <div class="card-block">
+                        <!--Title-->
+                        <h3 class="text-center font-up font-bold indigo-text py-2 mb-3"><strong><%=video.title%></strong></h3>
+                        <h5 class="text-center"><%=video.description%></h5>
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe class="embed-responsive-item" src=<%=video.video_url%> allowfullscreen></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% end %>
+    <% end %>
+</div>

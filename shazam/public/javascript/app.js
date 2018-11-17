@@ -4,7 +4,8 @@
 $( document ).ready(function() {
 
     audioDevices = []
-    var currentRecorder
+    mediaRecorder = ""
+    audioChunks = []
 
     //Output details before allowing the user to start recording
     if (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) == false) {
@@ -36,7 +37,7 @@ $( document ).ready(function() {
 
                 //create a function that keep track of what mic is selected
                 $("#notrecording > select").change(function() {
-                    selectNewDevice((this).val());
+                    selectNewDevice($(this).val());
                 });
 
                 //add in the selection options
@@ -53,6 +54,10 @@ $( document ).ready(function() {
             }
         }
     }
+    
+    function report(){
+        saveRecording()
+    }
 
     function selectNewDevice(index){
         var constraints = {
@@ -63,24 +68,41 @@ $( document ).ready(function() {
 
         navigator.mediaDevices.getUserMedia(constraints)
         .then((stream) => {
-            currentRecorder = new MediaRecorder(stream)
+            //create a recorder that is available for manuipulation
+            mediaRecorder = new MediaRecorder(stream)
+
+            mediaRecorder.ondataavailable = function (event){
+                audioChunks.push(event.data)
+            }
         })
     }
 
     function startRecording(){
-        currentRecorder.start()
+        mediaRecorder.start()
     }
 
     function stopRecording(){
-        currentRecorder.stop()
+        mediaRecorder.stop()
     }
 
     function saveRecording(){
+        //audio chunk conversion
+        const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' })
+        const audioUrl = URL.createObjectURL(audioBlob)
+        const audio = new Audio(audioUrl)
 
+        //link hacking to save the file
+        var a = document.createElement('a')
+        document.body.appendChild(a)
+        a.style = 'display: none'
+        a.href = audioUrl
+        a.download = 'test.mp3'
+        a.click()
+        a.remove()
     }
 
     $( "#record" ).click(function() {
-        if(currentRecorder.state == "inactive"){
+        if(mediaRecorder.state == "inactive"){
             startRecording()
         }
         else{
@@ -88,98 +110,6 @@ $( document ).ready(function() {
         }
     })
 
-    /*
-    $( "#record" ).click(function() {
-        if(recording){
-            mediaRecorder.stop()
-            recording = false
-        }
-        else{
-            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-            .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.start();
-            });
-
-            const audioChunks = [];
-
-            mediaRecorder.addEventListener("dataavailable", event => {
-            audioChunks.push(event.data);
-            });
-
-            recording = true
-        }
-    });
-    */
-
-    /*
-    function getStream() {
-                if (window.stream) {
-                    window.stream.getTracks().forEach(function(track) {
-                    track.stop();
-                    });
-                }
-                
-                var constraints = {
-                    audio: {
-                    deviceId: {exact: audioSelect.value}
-                    }
-                };
-                
-                navigator.mediaDevices.getUserMedia(constraints)
-                .then(gotStream).catch(handleError);
-            }
-            
-            function gotStream(stream) {
-                window.stream = stream; // make stream available to console
-                videoElement.srcObject = stream;
-            }
-
-            function handleError(error) {
-                oldText = $("#microphone").text()
-                $("#microphone").text(oldText + " AND " + error)
-            }
-            */
-
-    /*
-    recording = false
-
-    $( "#record" ).click(function() {
-        if(recording){
-            mediaRecorder.stop()
-            recording = false
-        }
-        else{
-            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-            .then(stream => {
-                const mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.start();
-            });
-
-            const audioChunks = [];
-
-            mediaRecorder.addEventListener("dataavailable", event => {
-            audioChunks.push(event.data);
-            });
-
-            recording = true
-        }
-    });
-    */
-
-});
-/*
-function hasGetUserMedia() {
-  return !!(navigator.mediaDevices &&
-    navigator.mediaDevices.getUserMedia);
-}
-
-if (hasGetUserMedia()) {
-  // Good to go!
-} else {
-  alert('getUserMedia() is not supported by your browser');
-}
-*/
-
-
-
+    $( "#play" ).click(function() {
+        saveRecording()
+    })

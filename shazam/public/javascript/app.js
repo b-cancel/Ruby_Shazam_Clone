@@ -1,11 +1,32 @@
-//TODO... check if it makes a difference to select the mic of a "groupId"... and not just "deviceId"
-
-
 $( document ).ready(function() {
 
+    //TODO... check if it makes a difference to select the mic of a "groupId"... and not just "deviceId"
+
+    class Recording{
+        constructor(){
+            this.audioChunks = []
+        }
+
+        setMediaRecorder(value){
+            this.mediaRecorder = value
+        }
+    }
+
     audioDevices = []
-    mediaRecorder = ""
-    audioChunks = []
+    recordingCount = 5 //how many recordings you want to be created max (used to identify things faster by recording as little as possible)
+    recordings = []
+
+    function saveEverySecond(index){
+        setTimeout(stopAndSaveEverySecond, 1000, index)
+    }
+
+    function stopAndSaveEverySecond(index){ 
+        if(index < recordingCount){
+            stopAndDownloadRecording(index)
+            index += 1
+            setTimeout(stopAndSaveEverySecond, 1000, index)
+        }
+    }
 
     //Output details before allowing the user to start recording
     if (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) == false) {
@@ -45,49 +66,82 @@ $( document ).ready(function() {
                     audioDevice = audioDevices[i]
                     option = document.createElement('option');
                     option.value = i
-                    option.text = "groupID: " + audioDevice.groupId + " deviceID: " + audioDevice.deviceId + " deviceLabel: " + audioDevice.label || 'unlabeled'
+                    option.text = "deviceID: " + audioDevice.deviceId + " deviceLabel: " + audioDevice.label || 'unlabeled' //+ " groupID: " + audioDevice.groupId
                     $("#notrecording > select").append(option)
                 }
 
-                //select default device
+                //select the first item
                 selectNewDevice(0)
             }
         }
     }
-    
-    function report(){
-        saveRecording()
+
+    function initRecordings(){
+        //create recording objects
+        for(i = 0; i < recordingCount; i++){
+            recordings.push(new Recording())
+        }
     }
 
-    function selectNewDevice(index){
+    function clearRecordings(){
+        recordings.splice(0, recordings.length)
+    }
+
+    function generateRecordings(index){
         var constraints = {
             audio: {
                 deviceId: {exact: audioDevices[index].deviceId}
             }
         };
 
-        navigator.mediaDevices.getUserMedia(constraints)
-        .then((stream) => {
-            //create a recorder that is available for manuipulation
-            mediaRecorder = new MediaRecorder(stream)
+        for(i = 0; i < recordingCount; i++){
+            navigator.mediaDevices.getUserMedia(constraints)
+            .then((stream) => {
+                //create a recorder that is available for manuipulation
+                currMediaRecorder = new MediaRecorder(stream)
+                recordings[i].setMediaRecorder(currMediaRecorder)
+    
+                recordings[i].mediaRecorder.ondataavailable = function (event){
+                    recordings[i].audioChunks.push(event.data)
+                }
+            })
+        }
+    }
 
-            mediaRecorder.ondataavailable = function (event){
-                audioChunks.push(event.data)
+    function selectNewDevice(index){
+        clearRecordings()
+        initRecordings()
+        generateRecordings(index)
+    }
+
+    function startRecordings(){
+        //start every individual recording
+        for(i = 0; i < recordings.length; i++){
+            if(recordings[i].mediaRecorder.state == "inactive"){
+                console.log("Recording " + i + " started")
+                recordings[i].mediaRecorder.start()
             }
-        })
+        }
+
+        //start the function that saves every second
+        //saveEverySecond(0)
     }
 
-    function startRecording(){
-        mediaRecorder.start()
+    function stopRecordings(){
+        for(i = 0; i < recordings.length; i++){
+            if(recordings[i].mediaRecorder.state == "recording"){
+                console.log("Recording " + i + " stopped")
+                recordings[i].mediaRecorder.stop()
+            }
+        }
     }
 
-    function stopRecording(){
-        mediaRecorder.stop()
-    }
+    function stopAndDownloadRecording(index){
+        //stop the recording to we can retreive its data
+        recordings[i].mediaRecorder.stop()
 
-    function saveRecording(){
         //audio chunk conversion
-        const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' })
+        const audioBlob = new Blob(recordings[i].audioChunks, { type: 'audio/mpeg' })
         const audioUrl = URL.createObjectURL(audioBlob)
         const audio = new Audio(audioUrl)
 
@@ -96,20 +150,23 @@ $( document ).ready(function() {
         document.body.appendChild(a)
         a.style = 'display: none'
         a.href = audioUrl
-        a.download = 'test.mp3'
+        a.download = 'test' + index + '.mp3'
         a.click()
         a.remove()
     }
 
+    isRecording = false
+
     $( "#record" ).click(function() {
-        if(mediaRecorder.state == "inactive"){
-            startRecording()
+        if(isRecording){
+            stopRecordings()
+            $("#record").text("record")
+            isRecording = false
         }
         else{
-            stopRecording()
+            startRecordings()
+            $("#record").text("stop")
+            isRecording = true
         }
     })
-
-    $( "#play" ).click(function() {
-        saveRecording()
-    })
+})

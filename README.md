@@ -16,4 +16,4 @@ Features I Implemented
 <a href="https://drive.google.com/open?id=1-MLxk7VS6c-XBY4Fiwz046BSY6olT-R2">Link To Demo Video</a>
 <img src="https://drive.google.com/uc?export=download&id=1Yo4r-3S3IWcbEsbpCycQR-hTIYua3FqP" width="500px"/>
 <br>
-NOTE: This might not work because its using an API that was running on a server that is no longer functional
+NOTE: This will not work because its using an API that was running on a server that is no longer functional

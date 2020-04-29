@@ -14,6 +14,6 @@ Features I Implemented
 </ul>
 <br>
 <a href="https://drive.google.com/open?id=1-MLxk7VS6c-XBY4Fiwz046BSY6olT-R2">Link To Demo Video</a>
-<img src="https://drive.google.com/uc?export=download&id=1Yo4r-3S3IWcbEsbpCycQR-hTIYua3FqP" width="500px"/>
+<img src="https://media.giphy.com/media/hWGMQxaRodKOHaU5u5/giphy.gif"/>
 <br>
 NOTE: This will not work because its using an API that was running on a server that is no longer functional
